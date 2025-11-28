@@ -17,6 +17,7 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
   final TextEditingController judulController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   String? imagePath;
+  bool _isLoading = false;
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -29,6 +30,9 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
   }
 
   Future<void> _create(String title, String description) async {
+    if (_isLoading) return;
+
+    // Validasi input
     if (imagePath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pilih gambar terlebih dahulu')),
@@ -36,35 +40,90 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
       return;
     }
 
-    final imageFile = File(imagePath!);
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Judul artikel harus diisi')),
+      );
+      return;
+    }
 
-    final message = await ArtikelController.createArtikel(
-      imageFile,
-      title,
-      description,
-      context,
-    );
+    if (description.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Deskripsi artikel harus diisi')),
+      );
+      return;
+    }
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final imageFile = File(imagePath!);
+
+      print('Creating article:');
+      print('Image path: $imagePath');
+      print('Title: $title');
+      print('Description: $description');
+
+      final message = await ArtikelController.createArtikel(
+        imageFile,
+        title,
+        description,
+        context,
+      );
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _update(String title, String description) async {
-    File? imageFile;
-    if (imagePath != null) {
-      imageFile = File(imagePath!);
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      File? imageFile;
+      if (imagePath != null) {
+        imageFile = File(imagePath!);
+      }
+
+      print('Updating article:');
+      print('Article ID: ${widget.artikelId}');
+      print('Image path: $imagePath');
+      print('Title: $title');
+      print('Description: $description');
+
+      final message = await ArtikelController.updateArtikel(
+        id: widget.artikelId!,
+        title: title.isNotEmpty ? title : null,
+        description: description.isNotEmpty ? description : null,
+        image: imageFile,
+        context: context,
+      );
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
-
-    final message = await ArtikelController.updateArtikel(
-      id: widget.artikelId!,
-      title: title.isNotEmpty ? title : null,
-      description: description.isNotEmpty ? description : null,
-      image: imageFile,
-      context: context,
-    );
-
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -96,7 +155,7 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
                 TextFormField(
                   controller: judulController,
                   decoration: InputDecoration(
-                    hintText: 'Masukkan Nama Lokasi',
+                    hintText: 'Masukkan Judul Artikel',
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: const BorderSide(
@@ -117,7 +176,6 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
                     ),
                   ),
                 ),
-                // end form judul artikel
 
                 // form deskripsi
                 const SizedBox(height: 10),
@@ -136,7 +194,7 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
                   minLines: 5,
                   keyboardType: TextInputType.multiline,
                   decoration: InputDecoration(
-                    hintText: 'Masukkan Deskripsi Lokasi',
+                    hintText: 'Masukkan Deskripsi Artikel',
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: const BorderSide(
@@ -157,7 +215,6 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
                     ),
                   ),
                 ),
-                // end form deskripsi
               ],
             ),
           ),
@@ -165,16 +222,20 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
         bottomNavigationBar: Padding(
           padding: const EdgeInsets.all(20),
           child: ElevatedButton(
-            onPressed: () {
-              final title = judulController.text;
-              final description = descriptionController.text;
+            onPressed: _isLoading
+                ? null
+                : () {
+                    final title = judulController.text.trim();
+                    final description = descriptionController.text.trim();
 
-              if (widget.isEdit == false) {
-                _create(title, description);
-              } else if (widget.isEdit == true && widget.artikelId != null) {
-                _update(title, description);
-              }
-            },
+                    if (widget.isEdit) {
+                      if (widget.artikelId != null) {
+                        _update(title, description);
+                      }
+                    } else {
+                      _create(title, description);
+                    }
+                  },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFD1A824),
               minimumSize: const Size(double.infinity, 55),
@@ -182,14 +243,23 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: Text(
-              widget.isEdit ? 'Edit' : 'Tambah',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            child: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : Text(
+                    widget.isEdit ? 'Edit' : 'Tambah',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
           ),
         ),
       ),

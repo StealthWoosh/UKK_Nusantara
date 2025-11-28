@@ -5,6 +5,8 @@ import '../../widgets/grid_my_artikel.dart';
 import '../../controllers/artikel_controller.dart';
 import '../../models/artikel_model.dart';
 import '../../screens/articles/form_screen.dart';
+import '../../controllers/auth_controller.dart'; // IMPORT BARU
+import '../../models/user_model.dart'; // IMPORT BARU
 
 class MyArticlesScreen extends StatefulWidget {
   const MyArticlesScreen({super.key});
@@ -19,11 +21,13 @@ class _MyArticlesScreenState extends State<MyArticlesScreen> {
   final int limit = 3;
   bool isLoading = false;
   bool hasMore = true;
+  late Future<User> _futureUserProfile; // VARIABLE BARU
 
   @override
   void initState() {
     super.initState();
     loadArtikel();
+    _futureUserProfile = AuthController.getProfile(); // INISIALISASI BARU
   }
 
   Future<void> loadArtikel() async {
@@ -62,28 +66,93 @@ class _MyArticlesScreenState extends State<MyArticlesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
+                // Header dengan data dinamis
                 Row(
                   children: [
-                    CircleAvatar(
-                      backgroundImage: const AssetImage(
-                        'assets/images/profile.png',
-                      ),
-                      radius: 25,
+                    FutureBuilder<User>(
+                      future: _futureUserProfile,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return CircleAvatar(
+                            backgroundImage: const AssetImage(
+                              'assets/images/profile.png',
+                            ),
+                            radius: 25,
+                          );
+                        } else if (snapshot.hasError) {
+                          return CircleAvatar(
+                            backgroundImage: const AssetImage(
+                              'assets/images/profile.png',
+                            ),
+                            radius: 25,
+                            child: const Icon(Icons.error, size: 15),
+                          );
+                        } else {
+                          final user = snapshot.data!;
+                          return CircleAvatar(
+                            backgroundImage: const AssetImage(
+                              'assets/images/profile.png',
+                            ),
+                            radius: 25,
+                          );
+                        }
+                      },
                     ),
                     const SizedBox(width: 10),
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Hello",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text("Username", style: TextStyle(fontSize: 15)),
-                      ],
+                    FutureBuilder<User>(
+                      future: _futureUserProfile,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Hello",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text("Loading...",
+                                  style: TextStyle(fontSize: 15)),
+                            ],
+                          );
+                        } else if (snapshot.hasError) {
+                          return const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Hello",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text("User", style: TextStyle(fontSize: 15)),
+                            ],
+                          );
+                        } else {
+                          final user = snapshot.data!;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Hello",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                user.name, // ✅ MENGGUNAKAN NAMA ASLI
+                                style: const TextStyle(fontSize: 15),
+                              ),
+                            ],
+                          );
+                        }
+                      },
                     ),
                     const Spacer(),
                     const Icon(
@@ -99,7 +168,7 @@ class _MyArticlesScreenState extends State<MyArticlesScreen> {
                 const SizedBox(height: 20),
                 TextField(
                   decoration: InputDecoration(
-                    hintText: "Cari Tempat Wisata",
+                    hintText: "Cari Artikel Kamu",
                     hintStyle: const TextStyle(fontSize: 14),
                     prefixIcon: const Icon(Icons.search),
                     filled: true,

@@ -72,7 +72,7 @@ class ArtikelService {
   }
 
   static Future<http.StreamedResponse> updateArtikel({
-    String? id,
+    required String id,
     File? image,
     String? title,
     String? description,

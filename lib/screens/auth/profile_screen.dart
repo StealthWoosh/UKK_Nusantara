@@ -3,10 +3,16 @@ import '/controllers/auth_controller.dart';
 import '/controllers/artikel_controller.dart';
 import '/widgets/grid_artikel_populer.dart';
 import '/models/user_model.dart';
+import '/screens/profile/edit_profile_screen.dart'; // Import EditProfileScreen
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -74,13 +80,20 @@ class ProfileScreen extends StatelessWidget {
                             children: [
                               ElevatedButton(
                                 onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'Fitur edit profile akan segera hadir!'),
-                                      backgroundColor: Color(0xFFD1A824),
+                                  // Navigasi ke EditProfileScreen
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const EditProfileScreen(),
                                     ),
-                                  );
+                                  ).then((value) {
+                                    // Refresh data jika kembali dari edit screen
+                                    if (value == true) {
+                                      // Trigger rebuild untuk menampilkan data terbaru
+                                      setState(() {});
+                                    }
+                                  });
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,

@@ -17,78 +17,102 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
 
+    print('SplashScreen initialized'); // Debug print
+
     Timer(const Duration(milliseconds: 500), () {
-      setState(() {
-        _opacity1 = 1.0;
-      });
+      if (mounted) {
+        setState(() {
+          _opacity1 = 1.0;
+        });
+        print('First text animation started - JELAJAH'); // Debug print
+      }
     });
 
     Timer(const Duration(milliseconds: 1500), () {
-      setState(() {
-        _opacity2 = 1.0;
-      });
+      if (mounted) {
+        setState(() {
+          _opacity2 = 1.0;
+        });
+        print('Second text animation started - NUSANTARA'); // Debug print
+      }
     });
 
-    Timer(const Duration(milliseconds: 2500), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
+    Timer(const Duration(milliseconds: 3500), () {
+      if (mounted) {
+        print('Navigating to LoginScreen'); // Debug print
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFD1A824),
       body: SafeArea(
         child: Stack(
           children: [
+            // Bottom wave background
             Align(
               alignment: Alignment.bottomCenter,
               child: ClipPath(
                 clipper: WaveClipperBottom(),
                 child: Container(
-                  color: const Color(0xFFD1A824),
+                  color: const Color(0xFFF6F2E5),
                   height: MediaQuery.of(context).size.height * 3 / 4,
                   width: double.infinity,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AnimatedOpacity(
-                        opacity: _opacity1,
-                        duration: const Duration(milliseconds: 800),
-                        child: const Text(
-                          "JELAJAH",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 50,
-                            fontFamily: "NicoMoji",
-                          ),
-                        ),
-                      ),
-                      AnimatedOpacity(
-                        opacity: _opacity2,
-                        duration: const Duration(milliseconds: 800),
-                        child: const Text(
-                          "NUSANTARA",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 50,
-                            fontFamily: "NicoMoji",
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ),
+
+            // Main content with text
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AnimatedOpacity(
+                    opacity: _opacity1,
+                    duration: const Duration(milliseconds: 1000),
+                    curve: Curves.easeInOut,
+                    child: const Text(
+                      "JELAJAH",
+                      style: TextStyle(
+                        color: Color.fromARGB(255, 255, 255, 255),
+                        fontSize: 50,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: "NicoMoji",
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  AnimatedOpacity(
+                    opacity: _opacity2,
+                    duration: const Duration(milliseconds: 1000),
+                    curve: Curves.easeInOut,
+                    child: const Text(
+                      "NUSANTARA",
+                      style: TextStyle(
+                        color: Color.fromARGB(255, 255, 255, 255),
+                        fontSize: 50,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: "NicoMoji",
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Top wave
             Align(
               alignment: Alignment.topCenter,
               child: ClipPath(
                 clipper: WaveClipperTop(),
                 child: Container(
-                  color: const Color(0xFFD1A824),
+                  color: const Color(0xFFF6F2E5),
                   height: 100,
                   width: double.infinity,
                 ),
